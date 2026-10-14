@@ -68,14 +68,6 @@ function loadPages(): Set<string> {
 
   const rootPages = [
     'index',
-    'about',
-    'contact',
-    'faq',
-    'privacy',
-    'terms',
-    'licensing',
-    'kura',
-    'hyper-compress',
     'tools',
     '404',
     'pdf-converter',
@@ -642,24 +634,7 @@ export default defineConfig(() => {
             process.env.SIMPLE_MODE === 'true'
               ? resolve(__dirname, 'simple-index.html')
               : resolve(__dirname, 'index.html'),
-          about: resolve(__dirname, 'about.html'),
-          contact: resolve(__dirname, 'contact.html'),
-          faq: resolve(__dirname, 'faq.html'),
-          privacy: resolve(__dirname, 'privacy.html'),
-          terms: resolve(__dirname, 'terms.html'),
-          licensing: resolve(__dirname, 'licensing.html'),
-          kura: resolve(__dirname, 'kura.html'),
-          'hyper-compress': resolve(__dirname, 'hyper-compress.html'),
           tools: resolve(__dirname, 'tools.html'),
-          ...Object.fromEntries(
-            fs
-              .readdirSync(resolve(__dirname, 'blog'))
-              .filter((f) => f.endsWith('.html'))
-              .map((f) => [
-                `blog-${f.replace('.html', '')}`,
-                resolve(__dirname, 'blog', f),
-              ])
-          ),
           '404': resolve(__dirname, '404.html'),
           // Category Hub Pages
           'pdf-converter': resolve(__dirname, 'pdf-converter.html'),
