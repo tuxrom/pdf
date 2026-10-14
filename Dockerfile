@@ -76,13 +76,15 @@ RUN --mount=type=secret,id=VITE_CORS_PROXY_URL,required=false \
     --mount=type=secret,id=VITE_CORS_PROXY_SECRET,required=false \
     VITE_CORS_PROXY_URL=$(cat /run/secrets/VITE_CORS_PROXY_URL 2>/dev/null || echo "") \
     VITE_CORS_PROXY_SECRET=$(cat /run/secrets/VITE_CORS_PROXY_SECRET 2>/dev/null || echo "") \
-    npm run build:with-docs
+    npm run build
 
 # Production stage
 FROM quay.io/nginx/nginx-unprivileged:alpine-slim
 
-LABEL org.opencontainers.image.source="https://github.com/alam00000/bentopdf"
-LABEL org.opencontainers.image.url="https://github.com/alam00000/bentopdf"
+LABEL org.opencontainers.image.source="https://github.com/tuxrom/pdf"
+LABEL org.opencontainers.image.description="Boîte à outils PDF Logis (basée sur BentoPDF)"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
+LABEL org.opencontainers.image.url="https://github.com/tuxrom/pdf"
 
 # global arg to local arg
 ARG BASE_URL

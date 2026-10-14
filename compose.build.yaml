@@ -1,0 +1,19 @@
+# Variante qui construit l'image localement à partir des sources
+# Usage : docker compose -f compose.build.yaml up -d --build
+services:
+  pdf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SIMPLE_MODE: 'false'
+        # Langue par défaut de l'interface (fr, en, de, ...)
+        # VITE_DEFAULT_LANGUAGE: fr
+    image: logis-pdf:local
+    container_name: logis-pdf
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      - DISABLE_IPV6=false
+      - ROBOTS_NOINDEX=true

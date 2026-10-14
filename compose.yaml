@@ -1,0 +1,12 @@
+services:
+  pdf:
+    image: ghcr.io/tuxrom/pdf:latest
+    container_name: logis-pdf
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      # Mettre à true si l'hôte n'a pas d'IPv6
+      - DISABLE_IPV6=false
+      # Empêche l'indexation par les moteurs de recherche (usage interne)
+      - ROBOTS_NOINDEX=true
