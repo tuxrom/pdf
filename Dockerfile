@@ -103,7 +103,10 @@ COPY --chown=nginx:nginx --from=builder /app/security-headers.conf /etc/nginx/se
 COPY --chown=nginx:nginx --from=builder /app/security-headers-docs.conf /etc/nginx/security-headers-docs.conf
 COPY --chown=nginx:nginx --chmod=755 nginx-ipv6.sh /docker-entrypoint.d/99-disable-ipv6.sh
 COPY --chown=nginx:nginx --chmod=755 nginx-noindex.sh /docker-entrypoint.d/98-noindex.sh
-RUN mkdir -p /etc/nginx/tmp && chown -R nginx:nginx /etc/nginx/tmp
+# Le dossier servi doit appartenir à nginx : 98-noindex.sh y réécrit les .html (sed -i) au démarrage
+USER root
+RUN mkdir -p /etc/nginx/tmp && chown -R nginx:nginx /etc/nginx/tmp /usr/share/nginx/html
+USER nginx
 
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
