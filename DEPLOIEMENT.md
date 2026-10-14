@@ -13,7 +13,7 @@ ghcr.io/tuxrom/pdf:latest
 ## Prérequis
 
 - Docker Engine 24+ avec le plugin `docker compose`
-- Architecture **x86_64 / amd64**
+- Architecture **x86_64 / amd64** ou **arm64** (Raspberry Pi 4/5, serveurs ARM) : l'image est multi-arch
 - Un port libre sur l'hôte (8080 par défaut)
 
 ## Déploiement rapide
@@ -112,20 +112,54 @@ Options de build utiles (`--build-arg` ou section `args` de `compose.build.yaml`
 
 La compilation demande environ 4 Go de RAM.
 
-## Publication de l'image (CI)
+## Publication de l'image
 
-Le workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)
-construit et pousse l'image sur `ghcr.io/tuxrom/pdf` :
+L'image `ghcr.io/tuxrom/pdf` est **multi-arch** : `docker pull` choisit automatiquement
+la bonne version (amd64 ou arm64). Elle est assemblée à partir de deux tags :
 
-- à chaque push sur `main` → tags `latest` et `sha-<commit>`
-- à chaque tag `vX.Y.Z` → tags `X.Y.Z` et `X.Y`
+| Tag      | Construit par                    | Quand                         |
+| -------- | -------------------------------- | ----------------------------- |
+| `:amd64` | GitHub Actions                   | automatiquement à chaque push |
+| `:arm64` | Raspberry Pi (script ci-dessous) | manuellement                  |
 
-Pour publier une version :
+### amd64 (CI)
+
+Le workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) :
+
+- construit et pousse `:amd64` (et `:sha-<commit>-amd64`) à chaque push sur `main` ;
+- recrée le manifeste `:latest` = `:amd64` + `:arm64` (si `:arm64` existe) ;
+- sur un tag `vX.Y.Z`, publie aussi `X.Y.Z` et `X.Y`.
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+### arm64 (Raspberry Pi)
+
+Le contenu compilé (`dist/`) est identique quelle que soit l'architecture. On le compile
+sur un PC (environ 4 Go de RAM nécessaires, trop pour un Pi à 2 Go), puis le Pi assemble
+seulement l'image nginx arm64 avec [`Dockerfile.prebuilt`](Dockerfile.prebuilt).
+
+Une seule fois, sur le Pi, se connecter au registre avec un token GitHub ayant le droit
+`write:packages` (GitHub → Settings → Developer settings → Personal access tokens) :
+
+```bash
+docker login ghcr.io -u tuxrom
+```
+
+Puis, depuis le PC (Git Bash), à la racine du dépôt :
+
+```bash
+scripts/build-arm64-pi.sh
+```
+
+Le script compile, envoie `dist/` au Pi (`PI_HOST`, par défaut `pi@192.168.31.118`), y
+construit et pousse `:arm64`, puis met à jour `:latest`. L'option `--skip-build` réutilise
+un `dist/` déjà compilé.
+
+> La version arm64 n'est mise à jour que lorsque ce script est relancé : après des
+> modifications du code, le relancer pour garder les deux architectures alignées.
 
 ## Licence
 

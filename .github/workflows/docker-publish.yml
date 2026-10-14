@@ -1,5 +1,9 @@
 name: Build et publication de l'image Docker
 
+# L'image amd64 est construite ici et poussée sous le tag :amd64.
+# L'image arm64 est construite à part (Raspberry Pi, voir DEPLOIEMENT.md) et poussée sous :arm64.
+# Les tags publics (latest, X.Y.Z) sont des manifestes multi-arch qui réunissent les deux.
+
 on:
   push:
     branches:
@@ -32,7 +36,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Métadonnées (tags et labels)
+      - name: Métadonnées (tags publics multi-arch)
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -41,15 +45,32 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,format=short
 
-      - name: Build et push
+      - name: Build et push amd64
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-amd64
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Manifeste multi-arch (amd64 + arm64 si disponible)
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          IMG="${REGISTRY}/${IMAGE_NAME}"
+          SOURCES="${IMG}:amd64"
+          if docker buildx imagetools inspect "${IMG}:arm64" > /dev/null 2>&1; then
+            SOURCES="${SOURCES} ${IMG}:arm64"
+          else
+            echo "::warning::Pas d'image ${IMG}:arm64 publiée, manifeste amd64 seul"
+          fi
+          TAG_ARGS=""
+          for t in ${TAGS}; do TAG_ARGS="${TAG_ARGS} -t ${t}"; done
+          docker buildx imagetools create ${TAG_ARGS} ${SOURCES}
+          docker buildx imagetools inspect "${IMG}:latest" || true
